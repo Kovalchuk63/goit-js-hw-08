@@ -1,31 +1,29 @@
+import Player from '@vimeo/player';
 import throttle from 'lodash.throttle';
-import { saveToLS, loadFromLS} from './local-stor-function.js';
 
-const form = document.querySelector('.feedback-form');
-const mailInput = document.querySelector('input[name="email"]');
-const textArea = document.querySelector('textarea[name="message"]');
+const CURRENT_TIME_KEY = 'videoplayer-current-time';
 
-form.addEventListener('submit', event => {
-    event.preventDefault();
-    console.log(formData);
-    formData = {};
-    localStorage.removeItem('feedback-form-state');
-    form.reset();
-});
+const iframe = document.querySelector('#vimeo-player');
 
-let formData = loadFromLS('feedback-form-state') ?? {};
-form.addEventListener('input', throttle(inputFormValue, 500));
+const player = new Player(iframe);
 
-function inputFormValue (event) {
-    const value = event.target.value;
-    const key = event.target.name;
-    formData[key] = value;
-    saveToLS('feedback-form-state', formData);
-}
+const onPlay = function (data) {
+  localStorage.setItem(CURRENT_TIME_KEY, JSON.stringify(data.seconds));
+};
 
-mailInput.value = formData.email ?? ''; 
-textArea.value = formData.message ?? '';
+player.on('timeupdate', throttle(onPlay, 1000));
 
+const currentTime = localStorage.getItem(CURRENT_TIME_KEY);
 
+player
+  .setCurrentTime(currentTime)
+  .then(function (seconds) {})
+  .catch(function (error) {
+    switch (error.name) {
+      case 'RangeError':
+        break;
 
-
+      default:
+        break;
+    }
+  });
