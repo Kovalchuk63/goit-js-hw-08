@@ -1,29 +1,35 @@
-import Player from '@vimeo/player';
 import throttle from 'lodash.throttle';
 
-const CURRENT_TIME_KEY = 'videoplayer-current-time';
+const LOCAL_STORAGE_KEY = 'feedback-form-state';
 
-const iframe = document.querySelector('#vimeo-player');
+const form = document.querySelector('.feedback-form');
+const input = document.querySelector('input');
+const textarea = document.querySelector('textarea');
 
-const player = new Player(iframe);
+form.addEventListener('input', throttle(onFormInput, 500));
+form.addEventListener('submit', onFormSubmit);
 
-const onPlay = function (data) {
-  localStorage.setItem(CURRENT_TIME_KEY, JSON.stringify(data.seconds));
-};
+let formData = {};
 
-player.on('timeupdate', throttle(onPlay, 1000));
+onPageLoading();
 
-const currentTime = localStorage.getItem(CURRENT_TIME_KEY);
+function onPageLoading(event) {
+  const existingMessage = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (existingMessage) {
+    formData = JSON.parse(existingMessage) || {};
+    input.value = formData.email || '';
+    textarea.value = formData.message || '';
+  }
+}
 
-player
-  .setCurrentTime(currentTime)
-  .then(function (seconds) {})
-  .catch(function (error) {
-    switch (error.name) {
-      case 'RangeError':
-        break;
+function onFormInput(event) {
+  formData[event.target.name] = event.target.value;
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
+}
 
-      default:
-        break;
-    }
-  });
+function onFormSubmit(event) {
+  event.preventDefault();
+  event.target.reset();
+  localStorage.removeItem(LOCAL_STORAGE_KEY);
+  console.log(formData);
+}
